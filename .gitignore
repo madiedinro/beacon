@@ -7,3 +7,9 @@ _cgo_*
 _test*
 *.out
 _obj
+.idea
+*.iml
+.build-harness
+build-harness
+dist/*
+

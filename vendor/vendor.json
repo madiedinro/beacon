@@ -1,0 +1,11 @@
+{
+  "comment": "",
+  "heroku": {
+    "install": [
+      "./..."
+    ]
+  },
+  "ignore": "test",
+  "package": [],
+  "rootPath": "github.com/cloudposse/ga-beacon"
+}
