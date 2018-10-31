@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-const beaconURL = "http://www.google-analytics.com/collect"
+const beaconURL = "https://www.google-analytics.com/collect"
 const timeout = time.Duration(5 * time.Second)
 
 var (
@@ -47,7 +47,7 @@ func generateUUID(cid *string) error {
 	return nil
 }
 
-func logHit(params []string, query url.Values, ua string, ip string, cid string) error {
+func logHit(params []string, query url.Values, ua string, ip string, cid string, referer string) error {
 	// 1) Initialize default values from path structure
 	// 2) Allow query param override to report arbitrary values to GA
 	//
@@ -60,6 +60,7 @@ func logHit(params []string, query url.Values, ua string, ip string, cid string)
 		"cid": {cid},        // unique client ID (server generated UUID)
 		"dp":  {params[1]},  // page path
 		"uip": {ip},         // IP address of the user
+		"dr":  {referer},    // Referer
 	}
 
 	for key, val := range query {
@@ -106,6 +107,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+
 	// /account -> account template
 	if len(params) == 1 {
 		templateParams := struct {
@@ -142,7 +144,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Expires", cacheUntil)
 		w.Header().Set("CID", cid)
 
-		logHit(params, query, r.Header.Get("User-Agent"), r.RemoteAddr, cid)
+		gaRequestStatus := "ok"
+		err := logHit(params, query, r.Header.Get("User-Agent"), r.RemoteAddr, cid, refOrg)
+		if err != nil {
+			gaRequestStatus = err.Error()
+		}
+		w.Header().Set("x-ga-req-status", gaRequestStatus)
 	}
 
 	// Write out GIF pixel or badge, based on presence of "pixel" param.
